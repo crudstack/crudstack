@@ -1,5 +1,11 @@
 # @crudstack/core
 
+## 0.4.1
+
+### Patch Changes
+
+- Enhanced `Query<T>` type and `resolveQuery` resolver to seamlessly support both top-level operators (e.g., `{ $eq: { userId: "123" } }`) and field-level operators (e.g., `{ userId: { $eq: "123" } }`) with perfect TypeScript auto-suggestions.
+
 ## 0.4.0
 
 ### Minor Changes
