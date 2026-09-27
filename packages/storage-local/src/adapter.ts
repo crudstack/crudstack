@@ -165,7 +165,10 @@ export class LocalStorageAdapter implements StorageAdapter {
         }
     }
 
-    public async getSignedUrl(id: string, expiresIn?: number): Promise<string> {
+    public async getSignedUrl(
+        id: string,
+        _expiresIn?: number,
+    ): Promise<string> {
         const fullPath = join(this.baseDirectory, id);
         return `file://${fullPath}`;
     }
