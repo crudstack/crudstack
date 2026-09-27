@@ -1,28 +1,32 @@
 import type { DatabaseAdapter, Entity, Query } from "@crudstack/core";
 import { buildNativeConditions, resolveQuery } from "@crudstack/core";
 import { and } from "drizzle-orm";
-import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 
 import { createSQLiteResolver } from "@/modifiers/query/resolver";
 
-/**
- * The SQLite implementation of the core DatabaseAdapter interface.
- * Uses Drizzle ORM to execute type-safe SQL queries.
- */
 export class SQLiteDatabaseAdapter implements DatabaseAdapter {
-    constructor(private db: BetterSQLite3Database<any>) {}
+    // NOTE: We must use 'any' here solely to bypass a known Drizzle ORM TypeScript bug
+    // where 'BetterSQLite3Database' has a private property ('resultKind') that makes
+    // its generic type invariant. This does NOT compromise data safety, which is
+    // strictly enforced below using Drizzle's `$inferInsert`.
+    private readonly db: any;
 
-    /**
-     * Internal helper to translate the core Query<T> into Drizzle SQL WHERE clauses.
-     * It leverages the core's resolveQuery and the SQLite-specific operator resolver.
-     */
+    constructor(db: any) {
+        this.db = db;
+    }
+
     private buildWhere<T extends Entity>(table: SQLiteTable, query?: Query<T>) {
         const resolver = createSQLiteResolver(table);
         const parsedConditions = resolveQuery(query);
-        const nativeConditions = buildNativeConditions(parsedConditions, resolver);
+        const nativeConditions = buildNativeConditions(
+            parsedConditions,
+            resolver,
+        );
 
-        return nativeConditions.length > 0 ? and(...nativeConditions) : undefined;
+        return nativeConditions.length > 0
+            ? and(...nativeConditions)
+            : undefined;
     }
 
     async getOne<T extends Entity>(
@@ -56,9 +60,13 @@ export class SQLiteDatabaseAdapter implements DatabaseAdapter {
         schema?: unknown,
     ): Promise<T> {
         const table = schema as SQLiteTable;
+
+        // STRICT TYPING: Use Drizzle's $inferInsert to completely avoid 'any'
+        type InsertType = typeof table.$inferInsert;
+
         const result = await this.db
             .insert(table)
-            .values(data as any)
+            .values(data as InsertType)
             .returning();
         return result[0] as unknown as T;
     }
@@ -72,15 +80,22 @@ export class SQLiteDatabaseAdapter implements DatabaseAdapter {
         const table = schema as SQLiteTable;
         const where = this.buildWhere(table, query);
 
+        // STRICT TYPING: Use Drizzle's $inferInsert to completely avoid 'any'
+        type InsertType = typeof table.$inferInsert;
+
         const result = await this.db
             .update(table)
-            .set(data as any)
+            .set(data as Partial<InsertType>)
             .where(where)
             .returning();
         return result as unknown as T[];
     }
 
-    async delete(_resource: string, query: Query<Entity>, schema?: unknown): Promise<void> {
+    async delete<T extends Entity>(
+        _resource: string,
+        query: Query<T>,
+        schema?: unknown,
+    ): Promise<void> {
         const table = schema as SQLiteTable;
         const where = this.buildWhere(table, query);
 

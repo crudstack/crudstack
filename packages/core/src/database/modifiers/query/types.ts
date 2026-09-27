@@ -10,8 +10,8 @@ export type FilterOperator<T> = {
     $gte?: T;
     $lt?: T;
     $lte?: T;
-    $in?: T[];
-    $nin?: T[];
+    $in?: T;
+    $nin?: T;
 };
 
 /**
@@ -24,8 +24,23 @@ export type WhereClause<T extends Entity> = {
 
 /**
  * The core Query type used across all adapters.
+ *
+ * Supports ALL of these formats with full auto-suggest:
+ * 1. { $eq: { userId: "123" } }        (Top-level operator)
+ * 2. { userId: "123" }                  (Implicit $eq)
+ * 3. { userId: { $eq: "123" } }         (Field-level explicit operator)
+ * 4. { age: { $gt: 18, $lt: 65 } }      (Multiple operators on one field)
  */
-export type Query<T extends Entity> = WhereClause<T>;
+export type Query<T extends Entity> = WhereClause<T> & {
+    $eq?: Partial<T>;
+    $ne?: Partial<T>;
+    $gt?: Partial<T>;
+    $gte?: Partial<T>;
+    $lt?: Partial<T>;
+    $lte?: Partial<T>;
+    $in?: Partial<T>;
+    $nin?: Partial<T>;
+};
 
 /**
  * A flattened, standardized representation of a single query condition.

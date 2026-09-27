@@ -13,26 +13,41 @@ export function resolveQuery<T extends Entity>(
 
     const conditions: ParsedCondition[] = [];
 
-    for (const [field, condition] of Object.entries(query)) {
-        if (condition === undefined) continue;
+    for (const [key, value] of Object.entries(query)) {
+        if (value === undefined) continue;
 
-        const isOperatorObject =
-            typeof condition === "object" &&
-            condition !== null &&
-            !Array.isArray(condition) &&
-            Object.keys(condition).some((k) => k.startsWith("$"));
+        // 1. Handle top-level operators like { $eq: { userId: "123" } }
+        if (key.startsWith("$")) {
+            const operator = key as keyof FilterOperator<unknown>;
+            const fieldsObj = value as Record<string, unknown>;
 
-        if (isOperatorObject) {
-            for (const [op, val] of Object.entries(
-                condition as FilterOperator<unknown>,
-            )) {
-                if (val !== undefined) {
-                    conditions.push({ field, operator: op, value: val });
+            for (const [field, fieldValue] of Object.entries(fieldsObj)) {
+                if (fieldValue !== undefined) {
+                    conditions.push({ field, operator, value: fieldValue });
                 }
             }
-        } else {
-            // Implicit $eq for direct values
-            conditions.push({ field, operator: "$eq", value: condition });
+        }
+        // 2. Handle field-level conditions like { userId: "123" } or { userId: { $eq: "123" } }
+        else {
+            const field = key;
+            const isOperatorObject =
+                typeof value === "object" &&
+                value !== null &&
+                !Array.isArray(value) &&
+                Object.keys(value).some((k) => k.startsWith("$"));
+
+            if (isOperatorObject) {
+                for (const [op, val] of Object.entries(
+                    value as FilterOperator<unknown>,
+                )) {
+                    if (val !== undefined) {
+                        conditions.push({ field, operator: op, value: val });
+                    }
+                }
+            } else {
+                // Implicit $eq for direct values
+                conditions.push({ field, operator: "$eq", value });
+            }
         }
     }
 

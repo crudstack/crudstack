@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import { join, extname, dirname } from "node:path";
+
 import type {
     StorageAdapter,
     StorageFile,
@@ -17,30 +18,20 @@ export class LocalStorageAdapter implements StorageAdapter {
         this.indexPath = join(this.baseDirectory, INDEX_FILE);
     }
 
-    /**
-     * Ensures the base directory exists before any operation.
-     */
     private async ensureDirectory(): Promise<void> {
         await mkdir(this.baseDirectory, { recursive: true });
     }
 
-    /**
-     * Reads the central metadata index file.
-     */
     private async readIndex(): Promise<Record<string, StorageFile>> {
         await this.ensureDirectory();
         try {
             const data = await readFile(this.indexPath, "utf-8");
             return JSON.parse(data);
         } catch {
-            // If the file doesn't exist or is corrupted, start with an empty index
             return {};
         }
     }
 
-    /**
-     * Writes the central metadata index file.
-     */
     private async writeIndex(
         index: Record<string, StorageFile>,
     ): Promise<void> {
@@ -61,15 +52,15 @@ export class LocalStorageAdapter implements StorageAdapter {
         const fileId = randomUUID();
         const originalName = options?.fileName || "upload.bin";
         const ext = extname(originalName) || ".bin";
-        const fileName = options?.fileName || `${fileId}${ext}`;
+
+        // 1. FORCE UUID FILENAME: Prevents spaces, special characters, and collisions
+        const fileName = `${fileId}${ext}`;
 
         const relativePath = options?.folder
             ? `${options.folder}/${fileName}`
             : fileName;
 
         const fullPath = join(this.baseDirectory, relativePath);
-
-        // Ensure the specific folder for this file exists
         await mkdir(dirname(fullPath), { recursive: true });
 
         let buffer: Buffer;
@@ -86,13 +77,15 @@ export class LocalStorageAdapter implements StorageAdapter {
             );
         }
 
-        // Write the actual file to disk
         await writeFile(fullPath, buffer);
+
+        // 2. GENERATE CLEAN WEB URL: Always starts with /uploads/ and uses forward slashes
+        const webUrl = `/uploads/${relativePath.replace(/\\/g, "/")}`;
 
         const metadata: StorageFile = {
             id: relativePath,
             name: fileName,
-            url: `file://${fullPath}`,
+            url: webUrl, // This will now be like: /uploads/projects/123/uuid.png
             size: buffer.length,
             mimeType:
                 (options?.metadata?.mimeType as string) ||
@@ -101,7 +94,6 @@ export class LocalStorageAdapter implements StorageAdapter {
             metadata: options?.metadata,
         };
 
-        // Update the central index
         const index = await this.readIndex();
         index[relativePath] = metadata;
         await this.writeIndex(index);
@@ -118,7 +110,6 @@ export class LocalStorageAdapter implements StorageAdapter {
         const index = await this.readIndex();
         let results = Object.values(index);
 
-        // Filter by folder (checks if the relative path starts with the folder)
         if (query?.folder) {
             results = results.filter(
                 (f) =>
@@ -126,18 +117,12 @@ export class LocalStorageAdapter implements StorageAdapter {
                     dirname(f.id) === query.folder,
             );
         }
-
-        // Filter by prefix (checks the file name)
         if (query?.prefix) {
             results = results.filter((f) => f.name.startsWith(query.prefix!));
         }
-
-        // Filter by MIME type
         if (query?.mimeType) {
             results = results.filter((f) => f.mimeType === query.mimeType);
         }
-
-        // Apply limit
         if (query?.limit) {
             results = results.slice(0, query.limit);
         }
@@ -151,26 +136,19 @@ export class LocalStorageAdapter implements StorageAdapter {
 
         if (metadata) {
             const fullPath = join(this.baseDirectory, id);
-
-            // Delete the actual file
             try {
                 await unlink(fullPath);
             } catch {
-                // File might already be deleted manually, ignore
+                // Ignore if already deleted
             }
-
-            // Remove from the central index
             delete index[id];
             await this.writeIndex(index);
         }
     }
 
-    public async getSignedUrl(
-        id: string,
-        _expiresIn?: number,
-    ): Promise<string> {
-        const fullPath = join(this.baseDirectory, id);
-        return `file://${fullPath}`;
+    public async getSignedUrl(id: string, expiresIn?: number): Promise<string> {
+        // For local public files, the signed URL is just the public web path
+        return `/uploads/${id.replace(/\\/g, "/")}`;
     }
 
     private getMimeType(ext: string): string {
