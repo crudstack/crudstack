@@ -1,5 +1,11 @@
 # @crudstack/sqlite
 
+## 0.2.2
+
+### Patch Changes
+
+- Improved type safety in `create` and `update` operations by strictly using Drizzle ORM's `$inferInsert` type, eliminating the need for `any` in data payloads.
+
 ## 0.2.0
 
 ### Minor Changes

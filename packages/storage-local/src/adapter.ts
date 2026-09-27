@@ -146,7 +146,10 @@ export class LocalStorageAdapter implements StorageAdapter {
         }
     }
 
-    public async getSignedUrl(id: string, expiresIn?: number): Promise<string> {
+    public async getSignedUrl(
+        id: string,
+        _expiresIn?: number,
+    ): Promise<string> {
         // For local public files, the signed URL is just the public web path
         return `/uploads/${id.replace(/\\/g, "/")}`;
     }
