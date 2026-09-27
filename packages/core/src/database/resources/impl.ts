@@ -1,5 +1,5 @@
-import type { DatabaseAdapter } from "@/adapters/database";
-import type { Query } from "@/modifiers/query";
+import type { DatabaseAdapter } from "@/database";
+import type { Query } from "@/database/modifiers/query";
 import type { Entity } from "@/types/entity";
 
 import type { Resource } from "./types";
@@ -29,7 +29,12 @@ export class ResourceImpl<T extends Entity> implements Resource<T> {
     }
 
     public update(query: Query<T>, data: Partial<Omit<T, "id">>): Promise<T[]> {
-        return this.adapter.update<T>(this.resourceName, query, data, this.schema);
+        return this.adapter.update<T>(
+            this.resourceName,
+            query,
+            data,
+            this.schema,
+        );
     }
 
     public delete(query: Query<T>): Promise<void> {

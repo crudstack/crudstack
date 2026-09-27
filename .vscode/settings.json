@@ -43,7 +43,6 @@
     },
 
     // --- Tailwind CSS IntelliSense Layout Configurations ---
-    "tailwindCSS.experimental.classRegex": ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]* acquittal)[\"'`]"],
     "editor.quickSuggestions": {
         "strings": "on"
     }

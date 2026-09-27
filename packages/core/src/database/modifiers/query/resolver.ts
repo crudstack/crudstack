@@ -6,7 +6,9 @@ import type { FilterOperator, ParsedCondition, Query } from "./types";
  * This standardizes the query format, allowing adapters to iterate over a simple
  * list of conditions rather than parsing nested objects themselves.
  */
-export function resolveQuery<T extends Entity>(query?: Query<T>): ParsedCondition[] {
+export function resolveQuery<T extends Entity>(
+    query?: Query<T>,
+): ParsedCondition[] {
     if (!query) return [];
 
     const conditions: ParsedCondition[] = [];
@@ -21,7 +23,9 @@ export function resolveQuery<T extends Entity>(query?: Query<T>): ParsedConditio
             Object.keys(condition).some((k) => k.startsWith("$"));
 
         if (isOperatorObject) {
-            for (const [op, val] of Object.entries(condition as FilterOperator<unknown>)) {
+            for (const [op, val] of Object.entries(
+                condition as FilterOperator<unknown>,
+            )) {
                 if (val !== undefined) {
                     conditions.push({ field, operator: op, value: val });
                 }

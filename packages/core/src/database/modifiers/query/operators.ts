@@ -27,7 +27,8 @@ export function buildNativeConditions<TNative>(
     resolver: QueryOperatorResolver<TNative>,
 ): TNative[] {
     return conditions.map((cond) => {
-        const handler = resolver[cond.operator as keyof QueryOperatorResolver<TNative>];
+        const handler =
+            resolver[cond.operator as keyof QueryOperatorResolver<TNative>];
 
         if (!handler) {
             throw new Error(

@@ -1,4 +1,4 @@
-import type { Query } from "@/modifiers/query";
+import type { Query } from "@/database/modifiers/query";
 import type { Entity } from "@/types/entity";
 
 /**

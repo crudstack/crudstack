@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { DatabaseAdapter } from "@/adapters/database";
-import { ResourceImpl } from "@/resources";
+import type { DatabaseAdapter } from "@/database";
+import { ResourceImpl } from "@/database/resources";
 import type { Entity } from "@/types/entity";
 
 type User = Entity & { name: string; age: number };
@@ -29,7 +29,11 @@ describe("ResourceImpl", () => {
 
             const result = await resource.getOne(query);
 
-            expect(mockAdapter.getOne).toHaveBeenCalledWith("users", query, undefined);
+            expect(mockAdapter.getOne).toHaveBeenCalledWith(
+                "users",
+                query,
+                undefined,
+            );
             expect(result).toEqual(mockUser);
         });
     });
@@ -42,7 +46,11 @@ describe("ResourceImpl", () => {
 
             const result = await resource.getList(query);
 
-            expect(mockAdapter.getList).toHaveBeenCalledWith("users", query, undefined);
+            expect(mockAdapter.getList).toHaveBeenCalledWith(
+                "users",
+                query,
+                undefined,
+            );
             expect(result).toEqual(mockUsers);
         });
 
@@ -52,7 +60,11 @@ describe("ResourceImpl", () => {
 
             const result = await resource.getList();
 
-            expect(mockAdapter.getList).toHaveBeenCalledWith("users", undefined, undefined);
+            expect(mockAdapter.getList).toHaveBeenCalledWith(
+                "users",
+                undefined,
+                undefined,
+            );
             expect(result).toEqual(mockUsers);
         });
     });
@@ -65,7 +77,11 @@ describe("ResourceImpl", () => {
 
             const result = await resource.create(data);
 
-            expect(mockAdapter.create).toHaveBeenCalledWith("users", data, undefined);
+            expect(mockAdapter.create).toHaveBeenCalledWith(
+                "users",
+                data,
+                undefined,
+            );
             expect(result).toEqual(mockUser);
         });
     });
@@ -79,7 +95,12 @@ describe("ResourceImpl", () => {
 
             const result = await resource.update(query, data);
 
-            expect(mockAdapter.update).toHaveBeenCalledWith("users", query, data, undefined);
+            expect(mockAdapter.update).toHaveBeenCalledWith(
+                "users",
+                query,
+                data,
+                undefined,
+            );
             expect(result).toEqual(mockUsers);
         });
     });
@@ -91,14 +112,22 @@ describe("ResourceImpl", () => {
 
             await resource.delete(query);
 
-            expect(mockAdapter.delete).toHaveBeenCalledWith("users", query, undefined);
+            expect(mockAdapter.delete).toHaveBeenCalledWith(
+                "users",
+                query,
+                undefined,
+            );
         });
     });
 
     describe("with schema", () => {
         it("should pass schema to all adapter methods", async () => {
             const mockSchema = { type: "users" };
-            const resourceWithSchema = new ResourceImpl<User>("users", mockAdapter, mockSchema);
+            const resourceWithSchema = new ResourceImpl<User>(
+                "users",
+                mockAdapter,
+                mockSchema,
+            );
 
             await resourceWithSchema.getOne({ name: "John" });
             await resourceWithSchema.getList();
@@ -106,8 +135,16 @@ describe("ResourceImpl", () => {
             await resourceWithSchema.update({ name: "John" }, { age: 26 });
             await resourceWithSchema.delete({ name: "John" });
 
-            expect(mockAdapter.getOne).toHaveBeenCalledWith("users", { name: "John" }, mockSchema);
-            expect(mockAdapter.getList).toHaveBeenCalledWith("users", undefined, mockSchema);
+            expect(mockAdapter.getOne).toHaveBeenCalledWith(
+                "users",
+                { name: "John" },
+                mockSchema,
+            );
+            expect(mockAdapter.getList).toHaveBeenCalledWith(
+                "users",
+                undefined,
+                mockSchema,
+            );
             expect(mockAdapter.create).toHaveBeenCalledWith(
                 "users",
                 { name: "John", age: 25 },
@@ -119,7 +156,11 @@ describe("ResourceImpl", () => {
                 { age: 26 },
                 mockSchema,
             );
-            expect(mockAdapter.delete).toHaveBeenCalledWith("users", { name: "John" }, mockSchema);
+            expect(mockAdapter.delete).toHaveBeenCalledWith(
+                "users",
+                { name: "John" },
+                mockSchema,
+            );
         });
     });
 });

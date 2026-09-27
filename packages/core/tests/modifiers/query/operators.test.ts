@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildNativeConditions, QueryOperatorResolver, resolveQuery } from "@/modifiers/query";
+import {
+    buildNativeConditions,
+    QueryOperatorResolver,
+    resolveQuery,
+} from "@/database/modifiers/query";
 
 describe("buildNativeConditions", () => {
     const mockResolver: QueryOperatorResolver<string> = {
@@ -11,11 +15,15 @@ describe("buildNativeConditions", () => {
         $lt: (field, val) => `${field} < ${val}`,
         $lte: (field, val) => `${field} <= ${val}`,
         $in: (field, val) => `${field} IN (${(val as string[]).join(",")})`,
-        $nin: (field, val) => `${field} NOT IN (${(val as string[]).join(",")})`,
+        $nin: (field, val) =>
+            `${field} NOT IN (${(val as string[]).join(",")})`,
     };
 
     it("should build native conditions from parsed conditions", () => {
-        const conditions = resolveQuery({ age: { $gt: 18 }, name: "John" } as any);
+        const conditions = resolveQuery({
+            age: { $gt: 18 },
+            name: "John",
+        } as any);
         const result = buildNativeConditions(conditions, mockResolver);
 
         expect(result).toEqual(["age > 18", "name = John"]);
@@ -42,9 +50,9 @@ describe("buildNativeConditions", () => {
         const conditions = [{ field: "age", operator: "$unknown", value: 18 }];
         const incompleteResolver: any = { $eq: () => "eq" };
 
-        expect(() => buildNativeConditions(conditions, incompleteResolver)).toThrow(
-            'Unsupported query operator: "$unknown"',
-        );
+        expect(() =>
+            buildNativeConditions(conditions, incompleteResolver),
+        ).toThrow('Unsupported query operator: "$unknown"');
     });
 
     it("should return empty array for empty conditions", () => {
