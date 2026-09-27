@@ -1,5 +1,14 @@
 # @crudstack/core
 
+## 0.4.0
+
+### Minor Changes
+
+- Introduce `StorageAdapter` interface and storage types (`StorageFile`, `StorageUploadOptions`, `StorageQuery`) for unified file operations (upload, findById, find, delete, getSignedUrl).
+- Update `CrudStack` orchestrator to support an optional `storage` adapter alongside the `database` adapter, accessible via the new `getStorage()` method.
+- Restructure internal modules for better domain separation: moved database adapter and resources into the `database/` directory and created a dedicated `storage/` directory.
+- Add comprehensive test cases for the new `StorageAdapter` workflow and update existing tests to reflect the new directory structure.
+
 ## 0.3.0
 
 ### Minor Changes
